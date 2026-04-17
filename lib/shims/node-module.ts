@@ -12,8 +12,11 @@ import * as crypto from 'node:crypto';
 import * as diagnostics_channel from 'node:diagnostics_channel';
 import * as dns from 'node:dns';
 // For events, we need the default export (EventEmitter class) for CJS compatibility
-// CJS require('events') returns EventEmitter class directly
-import events, * as eventsNamespace from 'node:events';
+// CJS require('events') returns EventEmitter class directly.
+// Do NOT import * as namespace — bundlers (esbuild/rolldown) synthesize namespace
+// objects with Object.assign, which triggers EventEmitter.captureRejections's
+// strict boolean setter and crashes on CF Workers startup.
+import events from 'node:events';
 // Pre-import Node.js builtins that CJS modules might require
 import * as fs from 'node:fs';
 import * as fs_promises from 'node:fs/promises';
@@ -100,10 +103,12 @@ const child_process = {
     },
 };
 
-// Create a CJS-compatible events module
-// In CJS, require('events') returns EventEmitter class directly (the default export)
-// but also has named exports attached to it
-const eventsModule = Object.assign(events, eventsNamespace);
+// CJS-compatible events module: require('events') returns EventEmitter class directly.
+// The class already carries all its static properties (once, on, captureRejectionSymbol,
+// defaultMaxListeners, etc.) so copying the namespace is unnecessary. Avoid Object.assign
+// here — it triggers EventEmitter.captureRejections's boolean-validating setter in the CF
+// Workers Node compat layer when the namespace exports the property as undefined.
+const eventsModule = events;
 
 // Map of module names to their exports
 const builtinModules: Record<string, unknown> = {
