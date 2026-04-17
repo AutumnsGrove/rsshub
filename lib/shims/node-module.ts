@@ -38,7 +38,7 @@ import * as tty from 'node:tty';
 import * as url from 'node:url';
 import * as util from 'node:util';
 import * as util_types from 'node:util/types';
-import * as worker_threads from 'node:worker_threads';
+// node:worker_threads is not supported in CF Workers — stub provided below instead
 import * as zlib from 'node:zlib';
 
 // VM shim for Cloudflare Workers
@@ -131,7 +131,6 @@ const builtinModules: Record<string, unknown> = {
     process,
     perf_hooks,
     async_hooks,
-    worker_threads,
     tls,
     readline,
 
@@ -165,7 +164,6 @@ const builtinModules: Record<string, unknown> = {
     'node:process': process,
     'node:perf_hooks': perf_hooks,
     'node:async_hooks': async_hooks,
-    'node:worker_threads': worker_threads,
     'node:tls': tls,
     'node:readline': readline,
     'node:punycode': punycode,

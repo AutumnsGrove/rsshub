@@ -53,6 +53,18 @@ function workerAliasPlugin(): Plugin {
                 }
             }
 
+            // Handle already-resolved absolute paths (rolldown may resolve @/ via tsconfig before this hook)
+            if (path.isAbsolute(source) && !source.includes('.worker.')) {
+                for (const ext of ['.ts', '.tsx']) {
+                    if (source.endsWith(ext)) {
+                        const workerPath = source.slice(0, -ext.length) + '.worker' + ext;
+                        if (fs.existsSync(workerPath)) {
+                            return workerPath;
+                        }
+                    }
+                }
+            }
+
             return null;
         },
     };
@@ -91,6 +103,10 @@ export default defineConfig({
         '@sentry/node': path.resolve('./lib/shims/sentry-node.ts'),
         '@honeybadger-io/js': path.resolve('./lib/shims/honeybadger.ts'),
         'xxhash-wasm': path.resolve('./lib/shims/xxhash-wasm.ts'),
+        // Winston is not CF Workers compatible — redirect to console-based shim
+        'winston': path.resolve('./lib/shims/winston.ts'),
+        // @hono/node-server pulls in Node.js fs APIs — replace with no-op
+        '@hono/node-server/serve-static': path.resolve('./lib/shims/hono-node-serve-static.ts'),
         // Routes file with Worker-specific build (match relative import from lib/)
         '../assets/build/routes.js': path.resolve('./assets/build/routes-worker.js'),
         // routes.json is only used in test environment, but rolldown still tries to resolve it
