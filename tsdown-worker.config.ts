@@ -76,10 +76,12 @@ export default defineConfig({
     format: 'esm',
     minify: true,
     clean: true,
-    // CF Workers is a browser-like runtime, not Node.js.
-    // 'browser' makes rolldown pick browser-compatible package exports
-    // (e.g. ofetch uses native fetch instead of pulling in undici).
-    platform: 'browser',
+    // Keep platform: 'node' so rolldown correctly maps bare specifiers
+    // like require("stream") to Node.js built-ins instead of treating
+    // them as directory paths (which crashes with EISDIR).
+    // Package export conditions are controlled separately below via
+    // inputOptions.resolve.conditionNames.
+    platform: 'node',
     target: 'esnext',
     treeshake: true,
     define: {
@@ -117,5 +119,15 @@ export default defineConfig({
     },
     deps: {
         onlyBundle: false,
+    },
+    // Prefer browser-compatible package export conditions.
+    // This makes packages like ofetch resolve to their browser entry
+    // (native fetch) instead of their Node.js entry (undici), without
+    // breaking bare built-in resolution (require("stream") etc.) which
+    // is controlled by platform: 'node' above.
+    inputOptions: {
+        resolve: {
+            conditionNames: ['worker', 'browser', 'import', 'default'],
+        },
     },
 });
