@@ -76,7 +76,10 @@ export default defineConfig({
     format: 'esm',
     minify: true,
     clean: true,
-    platform: 'node',
+    // CF Workers is a browser-like runtime, not Node.js.
+    // 'browser' makes rolldown pick browser-compatible package exports
+    // (e.g. ofetch uses native fetch instead of pulling in undici).
+    platform: 'browser',
     target: 'esnext',
     treeshake: true,
     define: {
@@ -104,7 +107,7 @@ export default defineConfig({
         '@honeybadger-io/js': path.resolve('./lib/shims/honeybadger.ts'),
         'xxhash-wasm': path.resolve('./lib/shims/xxhash-wasm.ts'),
         // Winston is not CF Workers compatible — redirect to console-based shim
-        'winston': path.resolve('./lib/shims/winston.ts'),
+        winston: path.resolve('./lib/shims/winston.ts'),
         // @hono/node-server pulls in Node.js fs APIs — replace with no-op
         '@hono/node-server/serve-static': path.resolve('./lib/shims/hono-node-serve-static.ts'),
         // Routes file with Worker-specific build (match relative import from lib/)
